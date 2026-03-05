@@ -1,0 +1,4 @@
+# Kamailio Dispatcher List
+# Set 1: FreeSWITCH media server pool
+# Format: setid destination flags priority attributes
+1 sip:freeswitch:5080 0 0

@@ -1,0 +1,118 @@
+services:
+  # --- Talkie API Server ---
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+      - DATABASE_URL=postgres://talkie:talkie@postgres:5432/talkie
+      - REDIS_URL=redis://redis:6379
+      - FREESWITCH_HOST=freeswitch
+      - FREESWITCH_PORT=8021
+      - FREESWITCH_PASSWORD=ClueCon
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+    networks:
+      - talkie
+
+  # --- PostgreSQL ---
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=talkie
+      - POSTGRES_PASSWORD=talkie
+      - POSTGRES_DB=talkie
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U talkie"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - talkie
+
+  # --- Redis ---
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - talkie
+
+  # --- FreeSWITCH ---
+  freeswitch:
+    image: signalwire/freeswitch:latest
+    ports:
+      - "5060:5060/udp"   # SIP UDP
+      - "5060:5060/tcp"   # SIP TCP
+      - "5061:5061/tcp"   # SIP TLS
+      - "5080:5080/udp"   # SIP external
+      - "8021:8021/tcp"   # ESL
+      - "16384-16484:16384-16484/udp"  # RTP media range
+    volumes:
+      - ./infra/freeswitch/conf:/etc/freeswitch
+    environment:
+      - ESL_PASSWORD=ClueCon
+    networks:
+      - talkie
+
+  # --- Kamailio SIP Proxy ---
+  kamailio:
+    image: kamailio/kamailio:5.7
+    ports:
+      - "5090:5060/udp"   # SIP UDP (external facing)
+      - "5090:5060/tcp"   # SIP TCP
+      - "5091:5061/tcp"   # SIP TLS
+      - "8080:8080/tcp"   # HTTP for JSONRPC
+    volumes:
+      - ./infra/kamailio/kamailio.cfg:/etc/kamailio/kamailio.cfg
+    depends_on:
+      - freeswitch
+    networks:
+      - talkie
+
+  # --- coturn (TURN/STUN) ---
+  coturn:
+    image: coturn/coturn:latest
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+      - "49152-49200:49152-49200/udp"
+    command: >
+      -n
+      --realm=talkie.local
+      --fingerprint
+      --lt-cred-mech
+      --user=talkie:talkie123
+      --min-port=49152
+      --max-port=49200
+      --log-file=stdout
+    networks:
+      - talkie
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  talkie:
+    driver: bridge

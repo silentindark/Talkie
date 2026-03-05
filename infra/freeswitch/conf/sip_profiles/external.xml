@@ -1,0 +1,35 @@
+<profile name="external">
+  <gateways>
+    <X-PRE-PROCESS cmd="include" data="external/*.xml"/>
+  </gateways>
+
+  <settings>
+    <param name="debug" value="0"/>
+    <param name="sip-trace" value="no"/>
+    <param name="sip-capture" value="no"/>
+
+    <param name="rfc2833-pt" value="101"/>
+    <param name="sip-port" value="5080"/>
+    <param name="dialplan" value="XML"/>
+    <param name="context" value="public"/>
+    <param name="dtmf-duration" value="2000"/>
+
+    <param name="inbound-codec-prefs" value="$${global_codec_prefs}"/>
+    <param name="outbound-codec-prefs" value="$${outbound_codec_prefs}"/>
+
+    <param name="manage-presence" value="false"/>
+    <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
+    <param name="ext-sip-ip" value="$${external_sip_ip}"/>
+
+    <param name="rtp-timer-name" value="soft"/>
+    <param name="rtp-ip" value="0.0.0.0"/>
+    <param name="sip-ip" value="0.0.0.0"/>
+
+    <!-- STIR/SHAKEN identity header passthrough -->
+    <param name="pass-callee-id" value="false"/>
+
+    <!-- NAT -->
+    <param name="aggressive-nat-detection" value="true"/>
+    <param name="NDLB-received-in-nat-reg-contact" value="true"/>
+  </settings>
+</profile>

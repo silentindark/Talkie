@@ -1,0 +1,28 @@
+<include>
+  <context name="public">
+    <!-- Inbound calls from PSTN via Telnyx/carrier -->
+    <extension name="inbound_handler">
+      <condition field="destination_number" expression="^(\+?1?\d{10,15})$">
+        <!-- Notify Talkie API of inbound call -->
+        <action application="set" data="talkie_call_direction=inbound"/>
+        <action application="set" data="talkie_from=${caller_id_number}"/>
+        <action application="set" data="talkie_to=${destination_number}"/>
+
+        <!-- Send to Talkie API for routing instructions -->
+        <action application="curl" data="${talkie_api_url}/internal/calls/inbound post from=${caller_id_number}&to=${destination_number}&sipCallId=${sip_call_id}&freeswitchUuid=${uuid}"/>
+
+        <!-- Park the call while waiting for instructions -->
+        <action application="answer"/>
+        <action application="park"/>
+      </condition>
+    </extension>
+
+    <!-- Outbound calls initiated via ESL/API -->
+    <extension name="outbound_handler">
+      <condition field="context" expression="outbound">
+        <action application="set" data="effective_caller_id_number=${origination_caller_id_number}"/>
+        <action application="bridge" data="sofia/gateway/telnyx/${destination_number}"/>
+      </condition>
+    </extension>
+  </context>
+</include>

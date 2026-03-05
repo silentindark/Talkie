@@ -1,0 +1,19 @@
+<!-- Telnyx SIP Trunk Gateway -->
+<!-- Replace with your actual Telnyx SIP credentials -->
+<gateway name="telnyx">
+  <param name="realm" value="sip.telnyx.com"/>
+  <param name="proxy" value="sip.telnyx.com"/>
+  <param name="register" value="false"/>
+  <param name="caller-id-in-from" value="true"/>
+
+  <!-- Authentication (if using credential-based auth) -->
+  <!-- <param name="username" value="YOUR_SIP_USERNAME"/> -->
+  <!-- <param name="password" value="YOUR_SIP_PASSWORD"/> -->
+
+  <!-- Use IP-based auth by default (add your FS public IP to Telnyx dashboard) -->
+  <param name="register" value="false"/>
+  <param name="register-transport" value="udp"/>
+
+  <param name="retry-seconds" value="30"/>
+  <param name="ping" value="25"/>
+</gateway>
